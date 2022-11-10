@@ -1,0 +1,49 @@
+{
+  "name": "node-ribbon",
+  "version": "1.0.0",
+  "description": "A Node.js microservice IPC Library, like Java Netflix Ribbon , support HTTP",
+  "main": "lib/index.js",
+  "author": "larryzhuo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/larryzhuo/node-ribbon.git"
+  },
+  "keywords": [
+    "ribbon",
+    "microservice",
+    "IPC",
+    "load balance"
+  ],
+  "dependencies": {
+    "axios": "^1.1.3",
+    "log4js": "^6.4.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.2",
+    "@babel/preset-env": "^7.20.2",
+    "@babel/preset-typescript": "^7.18.6",
+    "@types/jest": "^29.2.2",
+    "@types/node": "^18.7.18",
+    "babel-jest": "^29.2.2",
+    "eslint": "^7.5.0",
+    "f2elint": "^2.2.1",
+    "jest": "^29.2.2",
+    "ts-jest": "^29.0.3",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.3.1",
+    "typescript": "^4.6.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc --watch",
+    "f2elint-scan": "f2elint scan",
+    "f2elint-fix": "f2elint fix",
+    "test": "jest --detectOpenHandles"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "f2elint commit-file-scan",
+      "commit-msg": "f2elint commit-msg-scan"
+    }
+  }
+}
