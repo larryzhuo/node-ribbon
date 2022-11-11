@@ -1,4 +1,4 @@
-import { NacosNamingClient } from 'nacos';
+import { Hosts, NacosNamingClient } from 'nacos';
 import { INacosNamingClientConfig } from '../interface';
 import { AbstractServiceDiscovery } from './service-discovery';
 import logger from '../log/log';
@@ -13,10 +13,20 @@ class NacosDiscovery extends AbstractServiceDiscovery {
     this.init(opts);
   }
 
-  async init(opts: INacosNamingClientConfig) {
+  async init(opts: INacosNamingClientConfig): Promise<void> {
     this.client = new NacosNamingClient(opts);
     await this.client.ready();
     logger.info(`nacos ready success`);
+  }
+
+  async destroy(): Promise<void> {
+    if (this.client) {
+      this.client.unSubscribe();
+    }
+  }
+
+  subscribeCb(hosts: Hosts) {
+    this.emit(this.ServerChangeEvent, hosts);
   }
 
   /**
@@ -30,9 +40,7 @@ class NacosDiscovery extends AbstractServiceDiscovery {
     if (!this.client) {
       throw Error('client not ready');
     }
-    this.client.subscribe(serviceName, (hosts) => {
-      this.emit(this.ServerChangeEvent, hosts);
-    });
+    this.client.subscribe(serviceName, this.subscribeCb);
   }
 }
 
