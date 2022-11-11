@@ -1,37 +1,53 @@
-import { ClusterNode, RedisOptions } from 'ioredis';
+import { NacosNamingClient } from 'nacos';
 
-export enum StorageTypeEnum {
-  memory = 'memory',
-  redis = 'redis',
+/**
+ * service discovery config
+ */
+export enum ServiceDiscoveryTypeEnum {
+  Nacos = 'nacos',
+  Address = 'address', //直接传入一个或者一批地址
 }
 
-export interface IThrottlerStorageOption {
-  type: StorageTypeEnum;
-  options?: IRedisOption;
+export interface INacosNamingClientConfig {
+  logger: typeof console;
+  serverList: string | string[];
+  namespace?: string;
 }
 
-export interface IThrottlerOption {
+export interface IAddressConfig {
+  serverList: string | string[];
+}
+
+export interface IServiceDiscoveryOption {
+  type: ServiceDiscoveryTypeEnum;
+  option: INacosNamingClientConfig | IAddressConfig;
+}
+
+/**
+ * load balancer config
+ */
+export enum LoadBalancerEnum {
+  Random = 'random',
+  RoundRobin = 'RoundRobin',
+}
+export interface ILoadBalancerOption {
+  type: LoadBalancerEnum;
+}
+
+/**
+ * ribbon config
+ */
+export interface IRibbonOption {
+  serviceDiscovery: IServiceDiscoveryOption;
+  loadBalancer?: ILoadBalancerOption;
+
   /**
-   * The amount of requests that are allowed within the ttl's time window.
+   * 当前实例最大重试次数
    */
-  limit?: number;
+  maxAutoRetries?: number;
 
   /**
-   * The amount of seconds of how many requests are allowed within this time.
+   * 更换实例的最大次数
    */
-  ttl?: number;
-
-  /**
-   * The storage class to use where all the record will be stored in.
-   */
-  storage?: IThrottlerStorageOption;
-}
-
-export interface IRedisClusterOption {
-  cluster?: boolean;
-  nodes?: ClusterNode[];
-}
-
-export interface IRedisOption extends RedisOptions, IRedisClusterOption {
-  ttl?: number; // key expire ttl, default 60s
+  maxAutoRetriesNextServer?: number;
 }
