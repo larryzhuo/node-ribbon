@@ -1,20 +1,20 @@
-import { ChooseServerOption, Server } from './interface';
+import { ChooseServerOption, Server } from '../interface';
 
 export interface ILoadBalancer {
   /**
    * Initial list of servers.
    * @param newServers
    */
-  addServer(newServers: Server[]): void;
+  addServer: (newServers: Server[]) => void;
 
   /**
    * Choose a server from load balancer
    * @param option
    */
-  chooseServer(option: ChooseServerOption): Promise<Server>;
+  chooseServer: (option: ChooseServerOption) => Promise<Server>;
 
   /**
    * get server list
    */
-  getAllServers(): Promise<Server[]>;
+  getAllServers: () => Promise<Server[]>;
 }

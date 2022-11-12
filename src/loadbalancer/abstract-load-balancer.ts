@@ -1,14 +1,16 @@
-import { Server, ChooseServerOption } from './interface';
+import { ChooseServerOption, Server } from '../interface';
 import { ILoadBalancer } from './load-balancer';
 
 export abstract class AbstractLoadBalancer implements ILoadBalancer {
-  private _servers: Server[] = [];
+  protected _servers: Server[] = [];
 
-  public abstract addServer(newServers: Server[]): void;
+  addServer(newServers: Server[]): void {
+    this._servers = newServers;
+  }
 
-  public abstract chooseServer(option: ChooseServerOption): Promise<Server>;
+  abstract chooseServer(option: ChooseServerOption): Promise<Server>;
 
-  public async getAllServers(): Promise<Server[]> {
+  async getAllServers(): Promise<Server[]> {
     return this._servers;
   }
 }

@@ -1,11 +1,8 @@
-import { NacosNamingClient } from 'nacos';
-
 /**
  * service discovery config
  */
 export enum ServiceDiscoveryTypeEnum {
   Nacos = 'nacos',
-  Address = 'address', //直接传入一个或者一批地址
 }
 
 export interface INacosNamingClientConfig {
@@ -20,7 +17,22 @@ export interface IAddressConfig {
 
 export interface IServiceDiscoveryOption {
   type: ServiceDiscoveryTypeEnum;
-  option: INacosNamingClientConfig | IAddressConfig;
+  option: INacosNamingClientConfig;
+}
+
+/**
+ * 目标服务
+ */
+export enum ServiceNameTypeEnum {
+  // service name
+  Name = 'name',
+  // service addr, ip or domain
+  Address = 'Address',
+}
+
+export interface IServiceName {
+  type: ServiceNameTypeEnum;
+  serviceName: string | string[]; // 一个ribbon对应一个serviceName,活着多个写明的地址
 }
 
 /**
@@ -38,6 +50,7 @@ export interface ILoadBalancerOption {
  * ribbon config
  */
 export interface IRibbonOption {
+  serviceName: IServiceName;
   serviceDiscovery: IServiceDiscoveryOption;
   loadBalancer?: ILoadBalancerOption;
 
@@ -51,3 +64,14 @@ export interface IRibbonOption {
    */
   maxAutoRetriesNextServer?: number;
 }
+
+// Server Info
+export interface Server {
+  ip: string;
+  port: number;
+  weight?: number;
+  ephemeral?: boolean;
+  clusterName?: string;
+}
+
+export interface ChooseServerOption {}

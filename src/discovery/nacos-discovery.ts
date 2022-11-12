@@ -1,15 +1,19 @@
 import { Hosts, NacosNamingClient } from 'nacos';
 import { INacosNamingClientConfig } from '../interface';
-import { AbstractServiceDiscovery } from './service-discovery';
+import { AbstractServiceDiscovery, ServerChangeEvent } from './service-discovery';
 import logger from '../log/log';
 
-class NacosDiscovery extends AbstractServiceDiscovery {
+/**
+ * Nacos 注册服务
+ */
+export class NacosDiscovery extends AbstractServiceDiscovery {
   client: NacosNamingClient;
+  _subscribeSet: Set<string> = new Set();
 
   constructor(opts: INacosNamingClientConfig) {
     super();
 
-    //连接
+    // 连接
     this.init(opts);
   }
 
@@ -21,34 +25,40 @@ class NacosDiscovery extends AbstractServiceDiscovery {
 
   async destroy(): Promise<void> {
     if (this.client) {
-      this.client.unSubscribe();
+      for (const serviceName of this._subscribeSet) {
+        this.client.unSubscribe(serviceName, this.subscribeCb);
+      }
     }
   }
 
   subscribeCb(hosts: Hosts) {
-    this.emit(this.ServerChangeEvent, hosts);
+    this.emit(ServerChangeEvent, hosts);
   }
 
   /**
    * 监听服务
    * @param serviceName
    */
-  async subscribeService(serviceName: string): Promise<void> {
+  async subscribe(serviceName: string): Promise<void> {
     if (!serviceName) {
       throw Error('serviceName can not null');
     }
     if (!this.client) {
       throw Error('client not ready');
     }
+    this._subscribeSet.add(serviceName);
     this.client.subscribe(serviceName, this.subscribeCb);
   }
-}
 
-let ins: AbstractServiceDiscovery;
-
-export function getIns(opts: INacosNamingClientConfig): AbstractServiceDiscovery {
-  if (!ins) {
-    ins = new NacosDiscovery(opts);
+  /**
+   * 去掉监听
+   * @param info
+   * @param listener
+   */
+  async unSubscribe(info: string): Promise<void> {
+    if (!this.client) {
+      throw Error('client not ready');
+    }
+    this.client.unSubscribe(info, this.subscribeCb);
   }
-  return ins;
 }
