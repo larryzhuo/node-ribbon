@@ -11,8 +11,8 @@ export function formatAddress(addr: string): Server {
     throw new RibbonError('addr format error');
   }
   addr = addr.trim();
-  let kvs = addr.split(':');
-  let server: Server = {
+  const kvs = addr.split(':');
+  const server: Server = {
     ip: kvs[0],
     port: parseInt(kvs[1]),
   };

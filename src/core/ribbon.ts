@@ -12,8 +12,7 @@ import { AbstractLoadBalancer } from '../loadbalancer/abstract-load-balancer';
 import { TransportFactory } from '../transport/transport-factory';
 import logger from '../log/log';
 import { formatAddress } from './util';
-import { Axios, AxiosRequestConfig } from 'axios';
-import { config } from 'process';
+import { Axios } from 'axios';
 
 /**
  * Entry
@@ -82,10 +81,10 @@ export class Ribbon {
     this.loadBalancer = lb;
 
     if (this.service.type == ServiceNameTypeEnum.Address) {
-      //指定了 server ip
-      let servers: Server[] = [];
-      for (let sn of this.service.serviceName) {
-        let server: Server = formatAddress(sn);
+      // 指定了 server ip
+      const servers: Server[] = [];
+      for (const sn of this.service.serviceName) {
+        const server: Server = formatAddress(sn);
         servers.push(server);
       }
       this.loadBalancer.addServer(servers);
@@ -109,16 +108,16 @@ export class Ribbon {
     if (!this.loadBalancer) {
       throw new RibbonError('load balancer required');
     }
-    let axios = TransportFactory.createHttpClient(opts);
+    const axios = TransportFactory.createHttpClient(opts);
 
-    //interceptor set baseurl
+    // interceptor set baseurl
     axios.interceptors.request.use(async (config) => {
-      let server = await this.loadBalancer.chooseServer({});
-      config.baseURL = 'http://' + server.ip + ':' + server.port;
+      const server = await this.loadBalancer.chooseServer({});
+      config.baseURL = `http://${server.ip}:${server.port}`;
       return config;
     });
 
-    //interceptor fallback
+    // interceptor fallback
     axios.interceptors.response.use(
       async (res) => {
         return res;
