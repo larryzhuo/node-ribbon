@@ -1,11 +1,10 @@
 import * as os from 'os';
-
-const log4js = require('log4js');
+import log4js from 'log4js';
 
 log4js.configure({
-  appenders: { throttler: { type: 'file', filename: `${os.homedir()}/throttler.log` } },
-  categories: { default: { appenders: ['throttler'], level: 'info' } },
+  appenders: { ribbon: { type: 'file', filename: `${os.homedir()}/ribbon.log` } },
+  categories: { default: { appenders: ['ribbon'], level: 'info' } },
 });
 
-const logger = log4js.getLogger('throttler');
+const logger = log4js.getLogger('ribbon');
 export default logger;

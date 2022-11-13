@@ -1,0 +1,1 @@
+{"version":3,"file":"transport-factory.js","sourceRoot":"","sources":["../../src/transport/transport-factory.ts"],"names":[],"mappings":";;;;;;AAAA,kDAAiE;AAEjE,MAAa,gBAAgB;IAC3B;;;;OAIG;IACH,MAAM,CAAC,gBAAgB,CAAC,MAA2B;QACjD,OAAO,eAAK,CAAC,MAAM,CAAC,MAAM,CAAC,CAAC;IAC9B,CAAC;IAED,MAAM,CAAC,eAAe,KAAI,CAAC;CAC5B;AAXD,4CAWC"}

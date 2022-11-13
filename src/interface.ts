@@ -1,3 +1,5 @@
+import { AxiosRequestConfig } from 'axios';
+
 /**
  * service discovery config
  */
@@ -30,9 +32,9 @@ export enum ServiceNameTypeEnum {
   Address = 'Address',
 }
 
-export interface IServiceName {
+export interface IService {
   type: ServiceNameTypeEnum;
-  serviceName: string | string[]; // 一个ribbon对应一个serviceName,活着多个写明的地址
+  serviceName: string | string[]; // 一个ribbon对应一个serviceName eg: 'shop-provider';  活着多个写明的地址 eg: ['192.168.1.19:7001', '192.168.1.20:7002']
 }
 
 /**
@@ -50,9 +52,7 @@ export interface ILoadBalancerOption {
  * ribbon config
  */
 export interface IRibbonOption {
-  serviceName: IServiceName;
-  serviceDiscovery: IServiceDiscoveryOption;
-  loadBalancer?: ILoadBalancerOption;
+  service: IService;
 
   /**
    * 当前实例最大重试次数
@@ -75,3 +75,7 @@ export interface Server {
 }
 
 export interface ChooseServerOption {}
+
+export interface IGetHttpClientOption extends AxiosRequestConfig {
+  fallback?: (err: any) => void;
+}

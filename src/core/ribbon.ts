@@ -1,39 +1,50 @@
-import { IRibbonOption, IServiceName, Server, ServiceNameTypeEnum } from '../interface';
+import {
+  IGetHttpClientOption,
+  IRibbonOption,
+  IService,
+  Server,
+  ServiceNameTypeEnum,
+} from '../interface';
 import RibbonError from '../ribbon-error';
 import _ from 'lodash';
 import { AbstractServiceDiscovery, ServerChangeEvent } from '../discovery/service-discovery';
 import { AbstractLoadBalancer } from '../loadbalancer/abstract-load-balancer';
 import { TransportFactory } from '../transport/transport-factory';
 import logger from '../log/log';
+import { formatAddress } from './util';
+import { Axios, AxiosRequestConfig } from 'axios';
+import { config } from 'process';
 
 /**
  * Entry
  */
 export class Ribbon {
-  serviceName: IServiceName;
+  service: IService;
+  serviceName: string | string[];
   serviceDiscovery: AbstractServiceDiscovery;
   loadBalancer: AbstractLoadBalancer;
   maxAutoRetries: number;
   maxAutoRetriesNextServer: number;
 
   constructor(options: IRibbonOption) {
-    const { serviceName, maxAutoRetries, maxAutoRetriesNextServer } = options; // 一旦实例创建，serviceName 不可修改
-    if (!serviceName) {
-      throw new RibbonError('serviceName required');
+    const { service, maxAutoRetries, maxAutoRetriesNextServer } = options; // 一旦实例创建，serviceName 不可修改
+    if (!service) {
+      throw new RibbonError('service required');
     }
 
-    if (serviceName.type == ServiceNameTypeEnum.Name) {
-      if (!_.isString(serviceName)) {
+    if (service.type == ServiceNameTypeEnum.Name) {
+      if (!_.isString(service.serviceName)) {
         throw new RibbonError('serviceName format error, should string');
       }
-    } else if (serviceName.type == ServiceNameTypeEnum.Address) {
-      if (!_.isArray(serviceName)) {
+    } else if (service.type == ServiceNameTypeEnum.Address) {
+      if (!_.isArray(service.serviceName)) {
         throw new RibbonError('serviceName format error, should string array');
       }
     } else {
       throw new RibbonError('serviceName format error');
     }
-    this.serviceName = serviceName;
+    this.service = service;
+    this.serviceName = service.serviceName;
 
     this.maxAutoRetries = maxAutoRetries || 3;
     this.maxAutoRetriesNextServer = maxAutoRetriesNextServer || 3;
@@ -44,9 +55,9 @@ export class Ribbon {
    * @param discovery
    */
   withServiceDiscovery(discovery: AbstractServiceDiscovery) {
-    if (this.serviceName.type == ServiceNameTypeEnum.Name) {
+    if (this.service.type == ServiceNameTypeEnum.Name) {
       // 监听服务变化
-      const name = this.serviceName.serviceName as string;
+      const name = this.service.serviceName as string;
       this.serviceDiscovery.subscribe(name);
       const self = this;
       this.serviceDiscovery.on(ServerChangeEvent, (hosts: Server[]) => {
@@ -69,6 +80,16 @@ export class Ribbon {
    */
   withLoadBalancer(lb: AbstractLoadBalancer) {
     this.loadBalancer = lb;
+
+    if (this.service.type == ServiceNameTypeEnum.Address) {
+      //指定了 server ip
+      let servers: Server[] = [];
+      for (let sn of this.service.serviceName) {
+        let server: Server = formatAddress(sn);
+        servers.push(server);
+      }
+      this.loadBalancer.addServer(servers);
+    }
   }
 
   withMaxAutoRetries(mar: number) {
@@ -79,7 +100,33 @@ export class Ribbon {
     this.maxAutoRetriesNextServer = marns;
   }
 
-  getHttpClient() {
-    return TransportFactory.createHttpClient();
+  /**
+   * create http client
+   * @param opts
+   * @returns
+   */
+  async getHttpClient(opts: IGetHttpClientOption = {}): Promise<Axios> {
+    if (!this.loadBalancer) {
+      throw new RibbonError('load balancer required');
+    }
+    let axios = TransportFactory.createHttpClient(opts);
+
+    //interceptor set baseurl
+    axios.interceptors.request.use(async (config) => {
+      let server = await this.loadBalancer.chooseServer({});
+      config.baseURL = 'http://' + server.ip + ':' + server.port;
+      return config;
+    });
+
+    //interceptor fallback
+    axios.interceptors.response.use(
+      async (res) => {
+        return res;
+      },
+      (err) => {
+        opts.fallback && opts.fallback(err);
+      },
+    );
+    return axios;
   }
 }

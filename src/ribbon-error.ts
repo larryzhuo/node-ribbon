@@ -1,5 +1,5 @@
 export default class RibbonError extends Error {
   constructor(msg: string) {
-    super(`[node-ribbon]` + msg);
+    super(`[node-ribbon] ` + msg);
   }
 }
