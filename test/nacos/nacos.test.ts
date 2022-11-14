@@ -1,11 +1,40 @@
-import { LoadBalancerFactory, Ribbon } from '../../lib/index';
-import { LoadBalancerEnum, ServiceNameTypeEnum } from '../../lib/interface';
+import { AbstractServiceDiscovery } from '../../lib/discovery/service-discovery';
+import { LoadBalancerFactory, RibbonBuilder, ServiceDiscoveryFactory } from '../../lib/index';
+import {
+  LoadBalancerEnum,
+  ServiceDiscoveryTypeEnum,
+  ServiceNameTypeEnum,
+} from '../../lib/interface';
+
+const logger = console;
 
 jest.setTimeout(60 * 1000);
 
-beforeAll(() => {});
+async function sleep(time) {
+  return new Promise((resolve: any) => {
+    setTimeout(() => {
+      resolve();
+    }, time);
+  });
+}
 
-afterAll(() => {});
+let nacosIns: AbstractServiceDiscovery;
+beforeAll(async () => {
+  nacosIns = await ServiceDiscoveryFactory.createDiscovery({
+    type: ServiceDiscoveryTypeEnum.Nacos,
+    option: {
+      logger,
+      serverList: '127.0.0.1:8849',
+      namespace: 'public',
+    },
+  });
+});
+
+afterAll(async () => {
+  if (nacosIns) {
+    await nacosIns.destroy();
+  }
+});
 
 describe('address list', () => {
   /**
@@ -13,22 +42,25 @@ describe('address list', () => {
    */
   test('test random req', async () => {
     // start req
-    const ribbonIns = new Ribbon({
-      service: {
-        type: ServiceNameTypeEnum.Address,
-        serviceName: ['127.0.0.1:7001', '127.0.0.1:7002', '127.0.0.1:7003'],
-      },
-    });
-
-    // set loadbalancer
     const lbIns = LoadBalancerFactory.getLoadBalancer({ type: LoadBalancerEnum.Random });
-    ribbonIns.withLoadBalancer(lbIns);
+
+    const ribbonIns = new RibbonBuilder({
+      service: {
+        type: ServiceNameTypeEnum.Name,
+        serviceName: 'provider',
+      },
+    })
+      .withLoadBalancer(lbIns)
+      .withServiceDiscovery(nacosIns)
+      .build();
+    await ribbonIns.setup();
 
     const httpClient = await ribbonIns.getHttpClient({
       fallback: (err) => {
         console.log('req err:', err);
       },
     });
+    await sleep(3000);
 
     try {
       for (let i = 0, ilen = 10; i < ilen; i++) {
@@ -46,22 +78,25 @@ describe('address list', () => {
    */
   test('test roundrobin req', async () => {
     // start req
-    const ribbonIns = new Ribbon({
-      service: {
-        type: ServiceNameTypeEnum.Address,
-        serviceName: ['127.0.0.1:7001', '127.0.0.1:7002', '127.0.0.1:7003'],
-      },
-    });
-
-    // set loadbalancer
     const lbIns = LoadBalancerFactory.getLoadBalancer({ type: LoadBalancerEnum.RoundRobin });
-    ribbonIns.withLoadBalancer(lbIns);
+
+    const ribbonIns = new RibbonBuilder({
+      service: {
+        type: ServiceNameTypeEnum.Name,
+        serviceName: 'provider',
+      },
+    })
+      .withLoadBalancer(lbIns)
+      .withServiceDiscovery(nacosIns)
+      .build();
+    await ribbonIns.setup();
 
     const httpClient = await ribbonIns.getHttpClient({
       fallback: (err) => {
         console.log('req err:', err);
       },
     });
+    await sleep(3000);
 
     try {
       for (let i = 0, ilen = 10; i < ilen; i++) {

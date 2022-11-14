@@ -7,7 +7,6 @@ import { AbstractServiceDiscovery } from './service-discovery';
 export declare class NacosDiscovery extends AbstractServiceDiscovery {
     client: NacosNamingClient;
     _subscribeSet: Set<string>;
-    constructor(opts: INacosNamingClientConfig);
     init(opts: INacosNamingClientConfig): Promise<void>;
     destroy(): Promise<void>;
     subscribeCb(hosts: Hosts): void;

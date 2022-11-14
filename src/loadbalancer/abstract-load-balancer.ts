@@ -10,7 +10,7 @@ export abstract class AbstractLoadBalancer implements ILoadBalancer {
 
   abstract chooseServer(option: ChooseServerOption): Promise<Server>;
 
-  async getAllServers(): Promise<Server[]> {
+  getAllServers(): Server[] {
     return this._servers;
   }
 }

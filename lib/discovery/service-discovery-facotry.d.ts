@@ -5,5 +5,5 @@ export declare class ServiceDiscoveryFactory {
      * create discovery
      * @param option
      */
-    static createDiscovery(opts: IServiceDiscoveryOption): AbstractServiceDiscovery;
+    static createDiscovery(opts: IServiceDiscoveryOption): Promise<AbstractServiceDiscovery>;
 }

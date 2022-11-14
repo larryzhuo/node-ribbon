@@ -1,1 +1,1 @@
-{"version":3,"file":"ribbon-error.js","sourceRoot":"","sources":["../src/ribbon-error.ts"],"names":[],"mappings":";;AAAA,MAAqB,WAAY,SAAQ,KAAK;IAC5C,YAAY,GAAW;QACrB,KAAK,CAAC,gBAAgB,GAAG,GAAG,CAAC,CAAC;IAChC,CAAC;CACF;AAJD,8BAIC"}
+{"version":3,"file":"ribbon-error.js","sourceRoot":"","sources":["../src/ribbon-error.ts"],"names":[],"mappings":";;AAAA,MAAqB,WAAY,SAAQ,KAAK;IAC5C,YAAY,GAAW;QACrB,KAAK,CAAC,iBAAiB,GAAG,EAAE,CAAC,CAAC;IAChC,CAAC;CACF;AAJD,8BAIC"}

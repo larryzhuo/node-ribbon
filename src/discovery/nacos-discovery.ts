@@ -10,13 +10,6 @@ export class NacosDiscovery extends AbstractServiceDiscovery {
   client: NacosNamingClient;
   _subscribeSet: Set<string> = new Set();
 
-  constructor(opts: INacosNamingClientConfig) {
-    super();
-
-    // 连接
-    this.init(opts);
-  }
-
   async init(opts: INacosNamingClientConfig): Promise<void> {
     this.client = new NacosNamingClient(opts);
     await this.client.ready();
@@ -26,7 +19,7 @@ export class NacosDiscovery extends AbstractServiceDiscovery {
   async destroy(): Promise<void> {
     if (this.client) {
       for (const serviceName of this._subscribeSet) {
-        this.client.unSubscribe(serviceName, this.subscribeCb);
+        this.client.unSubscribe(serviceName, this.subscribeCb.bind(this));
       }
     }
   }
@@ -47,7 +40,7 @@ export class NacosDiscovery extends AbstractServiceDiscovery {
       throw Error('client not ready');
     }
     this._subscribeSet.add(serviceName);
-    this.client.subscribe(serviceName, this.subscribeCb);
+    this.client.subscribe(serviceName, this.subscribeCb.bind(this));
   }
 
   /**

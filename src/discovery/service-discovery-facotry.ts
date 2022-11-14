@@ -8,10 +8,12 @@ export class ServiceDiscoveryFactory {
    * create discovery
    * @param option
    */
-  static createDiscovery(opts: IServiceDiscoveryOption): AbstractServiceDiscovery {
+  static async createDiscovery(opts: IServiceDiscoveryOption): Promise<AbstractServiceDiscovery> {
     const { type, option } = opts;
     if (type == ServiceDiscoveryTypeEnum.Nacos) {
-      return new NacosDiscovery(option); // nacos 是否单例复用，由上层业务自己决定
+      const ins = new NacosDiscovery(); // nacos 是否单例复用，由上层业务自己决定
+      await ins.init(option);
+      return ins;
     } else {
       throw new RibbonError('not support service discovery type');
     }

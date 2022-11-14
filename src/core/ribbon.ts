@@ -2,6 +2,7 @@ import {
   IGetHttpClientOption,
   IRibbonOption,
   IService,
+  LoadBalancerEnum,
   Server,
   ServiceNameTypeEnum,
 } from '../interface';
@@ -13,17 +14,18 @@ import { TransportFactory } from '../transport/transport-factory';
 import logger from '../log/log';
 import { formatAddress } from './util';
 import { Axios } from 'axios';
+import { LoadBalancerFactory } from '../loadbalancer/load-balancer-factory';
 
 /**
- * Entry
+ * builder
  */
-export class Ribbon {
+export class RibbonBuilder {
   service: IService;
   serviceName: string | string[];
-  serviceDiscovery: AbstractServiceDiscovery;
-  loadBalancer: AbstractLoadBalancer;
   maxAutoRetries: number;
   maxAutoRetriesNextServer: number;
+  serviceDiscovery: AbstractServiceDiscovery;
+  loadBalancer: AbstractLoadBalancer;
 
   constructor(options: IRibbonOption) {
     const { service, maxAutoRetries, maxAutoRetriesNextServer } = options; // 一旦实例创建，serviceName 不可修改
@@ -49,37 +51,76 @@ export class Ribbon {
     this.maxAutoRetriesNextServer = maxAutoRetriesNextServer || 3;
   }
 
-  /**
-   * set service discovery
-   * @param discovery
-   */
-  withServiceDiscovery(discovery: AbstractServiceDiscovery) {
+  withServiceDiscovery(discovery: AbstractServiceDiscovery): RibbonBuilder {
+    this.serviceDiscovery = discovery;
+    return this;
+  }
+
+  withLoadBalancer(lb: AbstractLoadBalancer): RibbonBuilder {
+    this.loadBalancer = lb;
+    return this;
+  }
+
+  withMaxAutoRetries(mar: number): RibbonBuilder {
+    this.maxAutoRetries = mar;
+    return this;
+  }
+
+  withMaxAutoRetriesNextServer(marns: number): RibbonBuilder {
+    this.maxAutoRetriesNextServer = marns;
+    return this;
+  }
+
+  build() {
+    if (this.service.type == ServiceNameTypeEnum.Name) {
+      if (!this.serviceDiscovery) {
+        throw new RibbonError('service discovery required');
+      }
+    }
+    if (!this.loadBalancer) {
+      this.loadBalancer = LoadBalancerFactory.getLoadBalancer({
+        type: LoadBalancerEnum.RoundRobin,
+      });
+    }
+    return new Ribbon(this);
+  }
+}
+
+/**
+ * Entry
+ */
+export class Ribbon {
+  service: IService;
+  serviceName: string | string[];
+  serviceDiscovery: AbstractServiceDiscovery;
+  loadBalancer: AbstractLoadBalancer;
+  maxAutoRetries: number;
+  maxAutoRetriesNextServer: number;
+
+  constructor(builder: RibbonBuilder) {
+    this.service = builder.service;
+    this.serviceName = builder.serviceName;
+    this.maxAutoRetries = builder.maxAutoRetries;
+    this.maxAutoRetriesNextServer = builder.maxAutoRetriesNextServer;
+    this.serviceDiscovery = builder.serviceDiscovery;
+    this.loadBalancer = builder.loadBalancer;
+  }
+
+  async setup() {
+    // setup service discovery
     if (this.service.type == ServiceNameTypeEnum.Name) {
       // 监听服务变化
       const name = this.service.serviceName as string;
       this.serviceDiscovery.subscribe(name);
-      const self = this;
       this.serviceDiscovery.on(ServerChangeEvent, (hosts: Server[]) => {
-        if (this.loadBalancer) {
-          throw new RibbonError('load balancer required');
-        }
         // 添加 server
-        self.loadBalancer.addServer(hosts);
+        this.loadBalancer.addServer(hosts);
       });
-
-      this.serviceDiscovery = discovery;
     } else {
       logger.info('withServiceDiscovery will ignore');
     }
-  }
 
-  /**
-   * set load balancer
-   * @param lb
-   */
-  withLoadBalancer(lb: AbstractLoadBalancer) {
-    this.loadBalancer = lb;
-
+    // setup loadbalancer
     if (this.service.type == ServiceNameTypeEnum.Address) {
       // 指定了 server ip
       const servers: Server[] = [];
@@ -89,14 +130,6 @@ export class Ribbon {
       }
       this.loadBalancer.addServer(servers);
     }
-  }
-
-  withMaxAutoRetries(mar: number) {
-    this.maxAutoRetries = mar;
-  }
-
-  withMaxAutoRetriesNextServer(marns: number) {
-    this.maxAutoRetriesNextServer = marns;
   }
 
   /**

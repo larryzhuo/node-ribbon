@@ -16,5 +16,5 @@ export interface ILoadBalancer {
   /**
    * get server list
    */
-  getAllServers: () => Promise<Server[]>;
+  getAllServers: () => Server[];
 }
